@@ -26,7 +26,8 @@
           class="message"
           v-for="(message, index) in sessions[curSession].messages"
           :key="message.id"
-          :class="{ self: message.senderId == 14787164048688 }"
+          :class="{ self: message.role == 'user' }"
+    
         >
           <div class="user-info">
             <el-avatar
@@ -35,7 +36,7 @@
             />
             <span class="name">chatgpt</span>
           </div>
-          <div class="content">
+          <div class="content" v-loading="message.role == 'loading'" :element-loading-svg="textLoading">
             <md-editor
               v-model="sessions[curSession].messages[index].content"
               previewOnly
@@ -60,7 +61,7 @@
 <script setup>
 import { reactive, ref, onMounted, nextTick } from "vue";
 import useWebSocket from "@/hooks/websocket";
-
+import textLoading from "@/assets/svg/textLoading.svg"
 import MdEditor from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 
@@ -69,6 +70,7 @@ const ws = useWebSocket((e) => {
   const data = JSON.parse(e.data);
   for (let index in sessions) {
     if (sessions[index].id == data.session_id) {
+      sessions[index].messages.pop();
       sessions[index].messages.push(data.message);
       smoothScrollToBottom();
     }
@@ -98,7 +100,6 @@ const handleChangeSession = (index) => {
 // 发送消息
 const handleSendMessage = () => {
   sessions[curSession.value].messages.push({
-    senderId: 14787164048688,
     role: "user",
     content: text.value,
   });
@@ -112,6 +113,10 @@ const handleSendMessage = () => {
     })
   );
   save();
+  sessions[curSession.value].messages.push({
+    role: "loading",
+    content: "",
+  });
 };
 // 新会话
 const handleNewSession = () => {
