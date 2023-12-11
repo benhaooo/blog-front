@@ -44,7 +44,7 @@ const fetchArticleListByCondition = () => {
   loading.value = true;
   getArticleListByCondition(condition).then(({ data }) => {
     loading.value = false;
-    articleList.value.push(...data);
+    articleList.value.push(...data.rows);
     condition.current++;
   });
 };

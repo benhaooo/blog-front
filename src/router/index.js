@@ -27,13 +27,41 @@ const router = createRouter({
     {
       path: '/projectx',
       name: 'projectx',
-      component: () => import('@/views/projectx/projectx.vue')
-    },
+      component: () => import('@/views/projectx/projectx.vue'),
+      children: [
 
+      ]
+    },
     {
-      path: '/projectx/matrixn',
-      name: 'matrixn',
-      component: () => import('@/views/projectx/projects/MatrixN.vue')
+      path: '/projectx/chat',
+      name: 'chat',
+      component: () => import('@/views/projectx/projects/Chat.vue'),
+      children: [
+        {
+          path: '',
+          redirect: { name: 'message' }
+        },
+        {
+          path: '/projectx/chat/message',
+          name: 'message',
+          component: () => import('@/views/projectx/projects/page/Message.vue'),
+        },
+        {
+          path: '/projectx/chat/contacts',
+          name: 'contacts',
+          component: () => import('@/views/projectx/projects/page/Contacts.vue'),
+        },
+        {
+          path: '/projectx/chat/setting',
+          name: 'setting',
+          component: () => import('@/views/projectx/projects/page/Setting.vue'),
+        },
+      ]
+    },
+    {
+      path: '/projectx/matrix',
+      name: 'matrix',
+      component: () => import('@/views/projectx/projects/Matrix.vue')
     },
 
     {
@@ -54,7 +82,7 @@ const router = createRouter({
     {
       path: '/user',
       name: 'user',
-      redirect:"/user/userInfo",
+      redirect: "/user/userInfo",
       component: () => import('@/views/user/user.vue'),
       children: [
         {

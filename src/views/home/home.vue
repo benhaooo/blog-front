@@ -5,7 +5,13 @@
       <template v-for="(item, index) in articleList" :key="item.id">
         <ArticleCard :article="item" :reverse="index % 2 == 1" />
       </template>
-      <Loader v-if="homeStore.isLoading" />
+      <a-pagination
+        v-model:current="current"
+        :total="total"
+        @change="pageChange"
+        show-less-items
+      />
+      <!-- <Loader v-if="homeStore.isLoading" /> -->
     </div>
 
     <div class="aside-content">
@@ -66,20 +72,24 @@ import Loader from "@/components/loader.vue";
 import useScroll from "@/hooks/useScroll";
 
 const homeStore = useHomeStore();
-homeStore.fetchArticleList();
+homeStore.fetchArticleList(0);
 homeStore.fetchBlogInfo();
 
-const { articleList, blogInfo } = storeToRefs(homeStore);
+const { articleList, blogInfo, current, total } = storeToRefs(homeStore);
 
-const { isReachBottom } = useScroll();
+const pageChange = () => {
+  homeStore.fetchArticleList();
+};
+// console.log(articleList)
+// const { isReachBottom } = useScroll();
 
-watch(isReachBottom, (newValue) => {
-  if (newValue) {
-    homeStore.fetchArticleList().then(() => {
-      isReachBottom.value = false;
-    });
-  }
-});
+// watch(isReachBottom, (newValue) => {
+//   if (newValue) {
+//     homeStore.fetchArticleList().then(() => {
+//       isReachBottom.value = false;
+//     });
+//   }
+// });
 </script>
 
 <style lang="less" scoped>
@@ -105,7 +115,6 @@ watch(isReachBottom, (newValue) => {
         align-items: center;
         padding: 30px;
         margin-bottom: 30px;
-
 
         // 背景颜色
         background: linear-gradient(

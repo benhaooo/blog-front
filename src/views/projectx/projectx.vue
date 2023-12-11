@@ -14,7 +14,7 @@
     <div class="projectx-content">
       <div class="projects">
         <div class="projects-header"></div>
-        <router-link to="/projectx/matrixn">
+        <router-link to="/projectx/chat">
           <div class="project-item">
             <img
               class="project-item-favicon"
@@ -23,7 +23,7 @@
             />
             <div class="project-item-info">
               <h3 class="title">chatgpt</h3>
-              <p class="introduction">精致小巧gpt个人网站</p>
+              <p class="introduction">精致小巧的个人gpt网站</p>
             </div>
           </div>
         </router-link>

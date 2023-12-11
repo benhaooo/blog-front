@@ -6,10 +6,10 @@ export function getArticle(id) {
     })
 }
 
-export function getArticleListByCondition(conditon) {
+export function getArticleListByCondition(condition) {
     return MyRequest.get({
         url: '/article/list/condition',
-        params: conditon
+        params: condition
     })
 }
 export function getArticleCommentList(article_id) {

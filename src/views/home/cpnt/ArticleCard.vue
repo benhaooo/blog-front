@@ -1,11 +1,16 @@
 <template>
+  <div
+    class="block article-card animate__animated"
+    :class="{
+      'article-card-thumbnail-reverse': props.reverse,
+      animate__fadeInLeft: !props.reverse,
+      animate__fadeInRight: props.reverse,
+    }"
+  >
 
-<div class="block article-card animate__animated">
-
-  <!-- <div class="block article-card animate__animated" :class="{'article-card-thumbnail-reverse':props.reverse,'animate__fadeInLeft':!props.reverse,'animate__fadeInRight':props.reverse}"> -->
-    <!-- <router-link :to="`/article/${article.id}`" class="thumbnail"
+    <router-link :to="`/article/${article.id}`" class="thumbnail"
       ><img :src="article.thumbnail" alt=""
-    /></router-link> -->
+    /></router-link>
     <div class="article-info">
       <router-link :to="`/article/${article.id}`"
         ><h3 class="title">{{ article.title }}</h3></router-link
@@ -21,22 +26,22 @@
         |
         <span
           ><i class="iconfont">&#xe600;</i
-          ><router-link :to="`/category/${article.categoryId}`" class="classify">{{
-            article.categoryName
-          }}</router-link></span
+          ><router-link
+            :to="`/category/${article.categoryId}`"
+            class="classify"
+            >{{ article.categoryName }}</router-link
+          ></span
         >
         |
         <span class="tag"
-          ><i class="iconfont">&#xe66c;</i
-          >
-          <!-- {{ article.tagDTOList[0].name }} -->
-          </span
-        >
+          ><i class="iconfont">&#xe66c;</i>
+          {{ article.tags[0]?.name }}
+        </span>
       </div>
 
-      <!-- <p class="pre">
+      <p class="pre">
         {{ deleteMDTag(article.content) }}
-      </p> -->
+      </p>
     </div>
   </div>
 </template>
@@ -49,17 +54,15 @@ const props = defineProps({
   reverse: false,
 });
 
-console.dir(article)
-
 // 使用MarkdownIt组件去除markdown标签
 const md = new MarkdownIt();
-// const deleteMDTag = (articleContent) => {
-//   return (articleContent = md
-//     .render(articleContent)
-//     .replace(/<\/?[^>]*>/g, "")
-//     .replace(/[|]*\n/, "")
-//     .replace(/&npsp;/gi, ""));
-// };
+const deleteMDTag = (articleContent) => {
+  return (articleContent = md
+    .render(articleContent)
+    .replace(/<\/?[^>]*>/g, "")
+    .replace(/[|]*\n/, "")
+    .replace(/&npsp;/gi, ""));
+};
 </script>
 
 <style lang="less" scoped>
@@ -90,7 +93,7 @@ const md = new MarkdownIt();
     .title {
       font-size: 24px;
       font-weight: normal;
-      &:hover{
+      &:hover {
         color: #49b1f5;
       }
     }

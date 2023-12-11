@@ -1,4 +1,5 @@
 import {
+    getArticleListByCondition,
     getArticleList,
     getBlogInfo
 }
@@ -10,18 +11,22 @@ import {
 
 const useHomeStore = defineStore("home", {
     state: () => ({
-        currentPage: 1,
+        current: 1,
         articleList: [],
+        total: 0,
         isLoading: false,
         blogInfo: {},
     }),
     actions: {
         async fetchArticleList() {
             this.isLoading = true
-            const res = await getArticleList(this.currentPage++)
-            this.articleList.push(...res.data.rows)
+            const res = await getArticleListByCondition({ current: this.current })
+            this.articleList = res.data.rows
+            this.total = res.data.total
             this.isLoading = false
         },
+
+
         async fetchBlogInfo() {
             getBlogInfo().then(({ data }) => {
                 this.blogInfo = data
