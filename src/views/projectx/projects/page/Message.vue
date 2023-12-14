@@ -1,5 +1,17 @@
 <template>
   <div class="message-container">
+    <a-modal
+      v-model:visible="showEditModal"
+      title="编辑"
+      width="800px"
+      cancelText="取消"
+      okText="确定"
+      @ok="handelOk"
+    >
+      <textarea class="input" v-model="editText" style="height: 200px">
+ 你好</textarea
+      >
+    </a-modal>
     <div class="chat-key-wrapper">
       <el-button @click="handleNewSession">添加新的会话</el-button>
       <div class="chat-key-list">
@@ -13,7 +25,7 @@
           <!-- <div class="ava"></div> -->
           <div class="info">
             <div class="name">{{ session.name }}</div>
-            <div class="count">{{ session.messages.length }}</div>
+            <div class="count">{{ session.messages.length }}条对话</div>
           </div>
           <i class="iconfont" @click.stop="handleDelSession(index)">&#xe630;</i>
         </div>
@@ -27,17 +39,29 @@
           v-for="(message, index) in sessions[curSession].messages"
           :key="message.id"
           :class="{ self: message.role == 'user' }"
-    
         >
-          <div class="user-info">
-            <el-avatar
-              size="small"
-              src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png"
-            />
+          <div class="user-info" v-if="message.role == 'user'">
+            <div class="avater-wrapper">
+              <i class="iconfont center edit" @click="handleEditMessage(index)"
+                >&#xeabd;</i
+              >
+              <el-avatar size="small" :src="userInfo.avatar" />
+            </div>
+            <span class="name">{{ userInfo.nickName }}</span>
+          </div>
+          <div class="user-info" v-else>
+            <div class="avater-wrapper">
+              <i class="iconfont center edit" @click="handleEditMessage(index)"
+                >&#xeabd;</i
+              >
+              <el-avatar size="small" src="@/assets/imgs/gpt.png" />
+            </div>
             <span class="name">chatgpt</span>
           </div>
-          <div class="content" v-loading="message.role == 'loading'" :element-loading-svg="textLoading">
+          <div class="content">
+            <text-loading v-if="!message.content" />
             <md-editor
+              v-else
               v-model="sessions[curSession].messages[index].content"
               previewOnly
             />
@@ -45,14 +69,28 @@
         </div>
         <div class="my-message"></div>
       </div>
-      <div class="chat-input">
-        <textarea
-          class="input"
-          name="message"
-          v-model="text"
-          placeholder="请输入消息"
-        ></textarea
-        ><el-button @click="handleSendMessage()">发送</el-button>
+      <div class="chat-input-box">
+        <div class="input-config">
+          <a-select ref="select" v-model:value="model" style="width: 120px">
+            <a-select-option value="gpt-3.5-turbo"
+              >gpt-3.5-turbo</a-select-option
+            >
+            <a-select-option value="gpt-4">gpt-4</a-select-option>
+            <a-select-option value="gpt-4-32k">gpt-4-32k</a-select-option>
+            <a-select-option value="gpt-4-vision-preview"
+              >gpt-4-vision-preview</a-select-option
+            >
+          </a-select>
+        </div>
+        <div class="input-wrapper">
+          <textarea
+            class="input"
+            v-model="text"
+            placeholder="请输入消息"
+            @keydown.ctrl.enter="handleSendMessage()"
+          ></textarea>
+          <button class="send" @click="handleSendMessage()">发送</button>
+        </div>
       </div>
     </div>
   </div>
@@ -61,62 +99,114 @@
 <script setup>
 import { reactive, ref, onMounted, nextTick } from "vue";
 import useWebSocket from "@/hooks/websocket";
-import textLoading from "@/assets/svg/textLoading.svg"
+import TextLoading from "../cpnt/TextLoading.vue";
 import MdEditor from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
+import { message } from "ant-design-vue";
+import { generateUniqueId } from "@/utils/commonUtils";
+import useAppStore from "@/stores/modules/app";
+const appStore = useAppStore();
+import { useRoute } from "vue-router";
+const route = useRoute();
 
 // 接收消息
-const ws = useWebSocket((e) => {
+const ws = useWebSocket(async (e) => {
   const data = JSON.parse(e.data);
-  for (let index in sessions) {
-    if (sessions[index].id == data.session_id) {
-      sessions[index].messages.pop();
-      sessions[index].messages.push(data.message);
-      smoothScrollToBottom();
-    }
-  }
+  chattingMap[data.message_id].content += data?.content;
   save();
+  await nextTick();
+  smoothScrollToBottom();
+  // for (let index in sessions) {
+  //   if (sessions[index].id == data.session_id) {
+  //     sessions[index].messages.pop();
+  //     sessions[index].messages.push(data.message);
+  //     save();
+  //     await nextTick();
+  //     smoothScrollToBottom();
+  //     break;
+  //   }
+  // }
 });
+const showEditModal = ref(false);
+const editText = ref("");
+const editIndex = ref(0);
 const curSession = ref(0);
 const text = ref("");
+const model = ref("gpt-3.5-turbo");
+const userInfo = appStore.userInfo;
+const chattingMap = {};
+
 const scroll = ref(null);
-const sessions = reactive([]);
+const sessions = reactive([
+  {
+    name: "以文搜图",
+    id: generateUniqueId(),
+    messages: [
+      {
+        content:
+          "You are a useful Assistant that won't refuse to draw picture, instead, you will output specific markdown code for picture description, but don't use code block.",
+        role: "system",
+      },
+      {
+        content: "Can you draw some pictures for me?",
+        role: "user",
+      },
+      {
+        content: "Sure, what do you want me to draw?",
+        role: "system",
+      },
+      {
+        content:
+          "助手善于判断用户意图，当确定需要提供图片时，助手会变得沉默寡言，只使用以下格式输出markdown图片：![描述](https://image.pollinations.ai/prompt/描述)，因为这个语法可以自动按照提示生成并渲染图片。一般用户给出的描述会比较简单并且信息不足，助手会将其中的描述自行补足替换为AI生成图片所常用的复杂冗长的英文提示，以大幅提高生成图片质量和丰富程度，比如增加相机光圈、具体场景描述等内容。助手会避免用代码块或原始块包围markdown标记，因为那样只会渲染出代码块或原始块而不是图片。",
+        role: "system",
+      },
+    ],
+  },
+]);
 // 加载
 onMounted(() => {
   const savedSessions = JSON.parse(localStorage.getItem("sessions"));
   if (savedSessions) {
-    Object.assign(sessions, savedSessions);
+    sessions.push(...savedSessions);
   } else {
     handleNewSession();
   }
 });
 
 // 切换会话
-const handleChangeSession = (index) => {
+const handleChangeSession = async (index) => {
   curSession.value = index;
   text.value = "";
+  await nextTick();
   smoothScrollToBottom();
 };
 // 发送消息
-const handleSendMessage = () => {
+const handleSendMessage = async () => {
+  if (!text.value) return;
   sessions[curSession.value].messages.push({
     role: "user",
     content: text.value,
   });
   text.value = "";
   // 滚动到底部
+  await nextTick();
   smoothScrollToBottom();
-  ws.send(
-    JSON.stringify({
-      session_id: sessions[curSession.value].id,
-      messages: sessions[curSession.value].messages,
-    })
-  );
-  save();
+  const msgId = generateUniqueId();
+
+  const data = JSON.stringify({
+    model: model.value,
+    session_id: sessions[curSession.value].id,
+    message_id: msgId,
+    messages: sessions[curSession.value].messages,
+  });
   sessions[curSession.value].messages.push({
-    role: "loading",
+    role: "assistant",
     content: "",
   });
+
+  chattingMap[msgId] = sessions[curSession.value].messages.at(-1);
+
+  ws.send(data);
 };
 // 新会话
 const handleNewSession = () => {
@@ -136,10 +226,6 @@ const handleNewSession = () => {
   save();
 };
 
-// 随机id码
-const generateUniqueId = () => {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-};
 // 删除会话
 const handleDelSession = (index) => {
   if (index === curSession.value) {
@@ -147,6 +233,7 @@ const handleDelSession = (index) => {
       sessions[index].messages = [];
       return;
     }
+    curSession.value--;
   } else if (index < curSession.value) {
     curSession.value--;
   }
@@ -155,25 +242,52 @@ const handleDelSession = (index) => {
 
   save();
 };
+// 编辑消息
+const handleEditMessage = (index) => {
+  showEditModal.value = true;
+  editIndex.value = index;
+  editText.value = sessions[curSession.value].messages[index].content;
+};
+//确定编辑
+const handelOk = () => {
+  sessions[curSession.value].messages[editIndex.value].content = editText.value;
+  showEditModal.value = false;
+};
+
 // 保存至本地
 const save = () => {
   localStorage.setItem("sessions", JSON.stringify(sessions));
 };
 
+// 滚动到底部
 const smoothScrollToBottom = () => {
   const distanceToBottom =
     scroll.value.scrollHeight -
     (scroll.value.scrollTop + scroll.value.clientHeight);
-  const speed = Math.max(50, Math.floor(distanceToBottom / 20));
+  const speed = Math.max(55, Math.floor(distanceToBottom / 20));
 
-  if (distanceToBottom > 0) {
+  if (distanceToBottom >= 55) {
     scroll.value.scrollTop += speed;
     window.requestAnimationFrame(smoothScrollToBottom);
+    // 防止奇奇怪怪的bug
+  } else {
+    scroll.value.scrollTop =
+      scroll.value.scrollHeight - scroll.value.clientHeight;
+    return;
   }
 };
 </script>
 
 <style lang="less" scoped>
+.input {
+  width: 100%;
+  height: 100%;
+  background-color: #434657;
+  border: 2px solid rgb(34, 135, 225);
+  border-radius: 10px;
+  padding: 4px;
+  color: #fff;
+}
 .message-container {
   margin-top: 50px;
   display: flex;
@@ -235,7 +349,7 @@ const smoothScrollToBottom = () => {
 
     .messages {
       width: 100%;
-      height: 80%;
+      height: 70%;
       overflow-y: scroll;
       &::-webkit-scrollbar {
         width: 0; /* Safari,Chrome 隐藏滚动条 */
@@ -250,6 +364,23 @@ const smoothScrollToBottom = () => {
         align-items: flex-start;
         .user-info {
           display: flex;
+          .avater-wrapper {
+            position: relative;
+            height: 26px;
+            width: 26px;
+            clip-path: circle();
+            overflow: hidden;
+            .edit {
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              cursor: pointer;
+              color: #363635;
+              opacity: 0;
+              background-color: rgba(67, 66, 87, 0.535);
+              transition: 0.3s;
+            }
+          }
           .name {
             color: #fff;
             margin: 0 10px;
@@ -266,6 +397,15 @@ const smoothScrollToBottom = () => {
             --md-bk-color: transparent; /* 修改背景颜色 */
           }
         }
+        &:hover {
+          .user-info {
+            .avater-wrapper {
+              .edit {
+                opacity: 1;
+              }
+            }
+          }
+        }
       }
       .self {
         align-items: flex-end;
@@ -278,16 +418,31 @@ const smoothScrollToBottom = () => {
         }
       }
     }
-    .chat-input {
-      display: flex;
-      align-items: center;
+    .chat-input-box {
       padding: 20px;
-      .input {
-        flex: 1;
-        border: 3px solid #a881ef;
-        border-radius: 10px;
-        outline: none;
-        margin: 0 10px;
+      .input-config {
+        display: flex;
+        margin-bottom: 20px;
+      }
+      .input-wrapper {
+        height: 80px;
+        position: relative;
+
+        .send {
+          position: absolute;
+          right: 8px;
+          bottom: 8px;
+          width: 40px;
+          height: 33px;
+          border-radius: 10px;
+          border: 0;
+          background-color: rgb(29, 144, 245);
+          transition: 0.3s;
+          box-shadow: 0px 0px 5px 0px rgba(0, 136, 255);
+          &:hover {
+            box-shadow: 0px 0px 10px 0px rgba(0, 136, 255);
+          }
+        }
       }
     }
   }

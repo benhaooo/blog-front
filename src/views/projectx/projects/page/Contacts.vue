@@ -1,119 +1,113 @@
 <template>
-  <div class="message-container">
-    <div class="chat-key-list">
-      <div class="list-header">Chat Sessions</div>
-      <div
-        class="chat-key"
-        v-for="(session, index) in sessions"
-        :key="session.id"
-        @click="handleChangeSession(index)"
-        :class="{ active: currentSession === index }"
-      >
-        <div class="info">
-          <span class="name">{{ session.name }}</span>
-        </div>
-      </div>
-    </div>
-    <div class="chat-value-list">
-      <div v-if="currentSession !== null" class="chat-value">
-        <div class="messages">
-          <div
-            v-for="message in sessions[currentSession].messages"
-            :key="message.id"
-            class="message"
-            :class="{ self: message.senderId === 2 }"
-          >
-            <div class="content">{{ message.content }}</div>
+  <div class="askprompt-container">
+    <div class="askprompt-content">
+      <template v-for="(askprompt, index) in askprompts" :key="askprompt.id">
+        <div class="askprompt-card">
+          <div class="name">{{ askprompt.name }}</div>
+          <div class="content-wrapper">
+            <div class="content">{{ askprompt.content }}</div>
+            <button class="to-use" @click="handelUse(askprompt)">使用-></button>
           </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { reactive } from "vue";
+import { useRouter } from "vue-router";
+const router = useRouter();
 
-const sessions = ref([
+const askprompts = reactive([
   {
     id: 1,
-    name: "Alice",
-    messages: [
-      { id: 1, senderId: 1, content: "Hello!" },
-      { id: 2, senderId: 2, content: "Hi there!" },
-    ],
+    name: "写作助理",
+    content:
+      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
   },
   {
     id: 2,
-    name: "Bob",
-    messages: [
-      { id: 1, senderId: 2, content: "Hey!" },
-      { id: 2, senderId: 1, content: "What's up?" },
-    ],
+    name: "写作助理",
+    content:
+      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
+  },
+  {
+    id: 3,
+    name: "写作助理",
+    content:
+      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
+  },
+  {
+    id: 1,
+    name: "写作助理",
+    content:
+      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
+  },
+  {
+    id: 2,
+    name: "写作助理",
+    content:
+      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
+  },
+  {
+    id: 3,
+    name: "写作助理",
+    content:
+      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
   },
 ]);
 
-const currentSession = ref(0);
-
-const handleChangeSession = (index) => {
-  currentSession.value = index;
+const handelUse = (askprompt) => {
+  router.push({
+    name: "message",
+    state: askprompt,
+  });
 };
 </script>
 
 <style lang="less" scoped>
-/* Chat interface styles */
-.message-container {
-  display: flex;
-  justify-content: space-between;
-  padding: 20px;
-  height: 400px;
-  border: 1px solid #ccc;
-}
+.askprompt-container {
+  width: 80%;
+  margin: 0 auto;
 
-.chat-key-list {
-  flex: 1;
-  border-right: 1px solid #ccc;
-  padding-right: 20px;
-  overflow-y: auto;
-}
+  .askprompt-content {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
 
-.chat-key {
-  padding: 10px 0;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.chat-key.active {
-  background-color: #f0f0f0;
-}
-
-.chat-value-list {
-  flex: 2;
-  padding-left: 20px;
-  overflow-y: auto;
-}
-
-.chat-value {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-
-.messages {
-  display: flex;
-  flex-direction: column;
-}
-
-.message {
-  margin: 5px 0;
-  padding: 10px;
-  border-radius: 10px;
-  max-width: 70%;
-}
-
-.message.self {
-  align-self: flex-end;
-  background-color: #d4e7fe;
+    .askprompt-card {
+      width: 266px;
+      height: 360px;
+      overflow: hidden;
+      color: #fff;
+      background-color: #2e2f3a;
+      padding: 20px;
+      border-radius: 16px;
+      margin: 20px 0;
+      .name {
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 20px;
+      }
+      .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        .to-use {
+          width: 99px;
+          height: 40px;
+          background: linear-gradient(to right, #2196f3, #4ffbdf);
+          border-radius: 20px;
+          margin-top: 10px;
+          border: none;
+          &:hover {
+            box-shadow: 0 0 2px 1px #4ffbdf;
+          }
+        }
+      }
+    }
+  }
 }
 </style>

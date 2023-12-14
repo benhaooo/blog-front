@@ -4,7 +4,9 @@ h2,
 h3,
 h4,
 ul,
-li {
+li,
+textarea ,
+button{
     padding: 0;
     margin: 0;
 }
@@ -21,4 +23,8 @@ a {
 
 img {
     vertical-align: top;
+}
+
+textarea{
+    outline: none;
 }
