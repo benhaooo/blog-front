@@ -34,43 +34,50 @@
 
     <div class="chat-value">
       <div class="messages" ref="scroll">
-        <div
-          class="message"
+        <template
           v-for="(message, index) in sessions[curSession].messages"
           :key="message.id"
-          :class="{ self: message.role == 'user' }"
         >
-          <div class="user-info" v-if="message.role == 'user'">
-            <div class="avater-wrapper">
-              <i class="iconfont center edit" @click="handleEditMessage(index)"
-                >&#xeabd;</i
-              >
-              <el-avatar size="small" :src="userInfo.avatar" />
+          <div class="message" :class="{ self: message.role == 'user' }">
+            <div class="user-info" v-if="message.role == 'user'">
+              <div class="avater-wrapper">
+                <i
+                  class="iconfont center edit"
+                  @click="handleEditMessage(index)"
+                  >&#xeabd;</i
+                >
+                <el-avatar size="small" :src="userInfo.avatar" />
+              </div>
+              <span class="name">{{ userInfo.nickName }}</span>
             </div>
-            <span class="name">{{ userInfo.nickName }}</span>
-          </div>
-          <div class="user-info" v-else>
-            <div class="avater-wrapper">
-              <i class="iconfont center edit" @click="handleEditMessage(index)"
-                >&#xeabd;</i
-              >
-              <el-avatar size="small" src="@/assets/imgs/gpt.png" />
+            <div class="user-info" v-else>
+              <div class="avater-wrapper">
+                <i
+                  class="iconfont center edit"
+                  @click="handleEditMessage(index)"
+                  >&#xeabd;</i
+                >
+                <el-avatar size="small" src="@/assets/imgs/gpt.png" />
+              </div>
+              <span class="name">{{ model }}</span>
             </div>
-            <span class="name">chatgpt</span>
+            <div class="content">
+              <text-loading v-if="!message.content" />
+              <md-editor
+                v-else
+                v-model="sessions[curSession].messages[index].content"
+                previewOnly
+              />
+            </div>
           </div>
-          <div class="content">
-            <text-loading v-if="!message.content" />
-            <md-editor
-              v-else
-              v-model="sessions[curSession].messages[index].content"
-              previewOnly
-            />
+
+          <div class="divider" v-if="sessions[curSession].clearIndex == index">
+            上下文已清除
           </div>
-        </div>
-        <div class="my-message"></div>
+        </template>
       </div>
       <div class="chat-input-box">
-        <div class="input-config">
+        <div class="chat-config">
           <a-select ref="select" v-model:value="model" style="width: 120px">
             <a-select-option value="gpt-3.5-turbo"
               >gpt-3.5-turbo</a-select-option
@@ -81,6 +88,10 @@
               >gpt-4-vision-preview</a-select-option
             >
           </a-select>
+          <div class="clearCtx" @click="handelClearCtx">
+            <i class="iconfont">&#xe62e;</i>
+            <span>清除上下文</span>
+          </div>
         </div>
         <div class="input-wrapper">
           <textarea
@@ -112,20 +123,12 @@ const route = useRoute();
 // 接收消息
 const ws = useWebSocket(async (e) => {
   const data = JSON.parse(e.data);
-  chattingMap[data.message_id].content += data?.content;
+  if (data.content) {
+    chattingMap[data.message_id].content += data.content;
+  }
   save();
   await nextTick();
   smoothScrollToBottom();
-  // for (let index in sessions) {
-  //   if (sessions[index].id == data.session_id) {
-  //     sessions[index].messages.pop();
-  //     sessions[index].messages.push(data.message);
-  //     save();
-  //     await nextTick();
-  //     smoothScrollToBottom();
-  //     break;
-  //   }
-  // }
 });
 const showEditModal = ref(false);
 const editText = ref("");
@@ -141,6 +144,7 @@ const sessions = reactive([
   {
     name: "以文搜图",
     id: generateUniqueId(),
+    clearIndex: 3,
     messages: [
       {
         content:
@@ -195,9 +199,10 @@ const handleSendMessage = async () => {
 
   const data = JSON.stringify({
     model: model.value,
-    session_id: sessions[curSession.value].id,
     message_id: msgId,
-    messages: sessions[curSession.value].messages,
+    messages: sessions[curSession.value].messages.splice(
+      sessions[curSession.value].clearIndex + 1
+    ),
   });
   sessions[curSession.value].messages.push({
     role: "assistant",
@@ -207,6 +212,20 @@ const handleSendMessage = async () => {
   chattingMap[msgId] = sessions[curSession.value].messages.at(-1);
 
   ws.send(data);
+};
+
+// 清楚上下文
+const handelClearCtx = () => {
+  if (
+    sessions[curSession.value].clearIndex ==
+    sessions[curSession.value].messages.length - 1
+  ) {
+    sessions[curSession.value].clearIndex = null;
+  } else {
+    sessions[curSession.value].clearIndex =
+      sessions[curSession.value].messages.length - 1;
+  }
+  smoothScrollToBottom();
 };
 // 新会话
 const handleNewSession = () => {
@@ -417,12 +436,52 @@ const smoothScrollToBottom = () => {
           border-radius: 20px 5px 20px 20px;
         }
       }
+      .divider {
+        line-height: 20px;
+        text-align: center;
+        border-top: 1px solid #dedede;
+        border-bottom: 1px solid #dedede;
+        mask-image: linear-gradient(90deg, transparent, #000, transparent);
+        cursor: pointer;
+        color: #dedede;
+        font-size: 12px;
+      }
     }
     .chat-input-box {
       padding: 20px;
-      .input-config {
+      .chat-config {
         display: flex;
         margin-bottom: 20px;
+        .clearCtx {
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+          cursor: pointer;
+          color: #dedede;
+          padding: 2px 6px;
+          border: 1px solid #dedede;
+          border-radius: 12px;
+          font-size: 12px;
+          .iconfont {
+            font-size: 12px;
+            margin: 2px;
+          }
+          span {
+            white-space: nowrap;
+            width: 0;
+            transform: translateX(-5px);
+            opacity: 0;
+            transition: 0.5s ease;
+          }
+          &:hover {
+            span {
+              width: auto;
+              transform: translateX(0);
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+        }
       }
       .input-wrapper {
         height: 80px;
