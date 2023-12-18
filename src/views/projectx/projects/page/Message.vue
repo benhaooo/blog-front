@@ -83,15 +83,15 @@
               >gpt-3.5-turbo</a-select-option
             >
             <a-select-option value="gpt-4">gpt-4</a-select-option>
-            <a-select-option value="gpt-4-32k">gpt-4-32k</a-select-option>
             <a-select-option value="gpt-4-vision-preview"
               >gpt-4-vision-preview</a-select-option
             >
           </a-select>
-          <div class="clearCtx" @click="handelClearCtx">
-            <i class="iconfont">&#xe62e;</i>
-            <span>清除上下文</span>
-          </div>
+          <ExpandableButtom @click="handelClearCtx" :text="'你好'">
+            <i class="iconfont" style="font-size: 12px"
+              >&#xe62e;</i
+            ></ExpandableButtom
+          >
         </div>
         <div class="input-wrapper">
           <textarea
@@ -119,7 +119,7 @@ import useAppStore from "@/stores/modules/app";
 const appStore = useAppStore();
 import { useRoute } from "vue-router";
 const route = useRoute();
-
+import ExpandableButtom from "../cpnt/ExpandableBtn.vue";
 // 接收消息
 const ws = useWebSocket(async (e) => {
   const data = JSON.parse(e.data);
@@ -141,31 +141,31 @@ const chattingMap = {};
 
 const scroll = ref(null);
 const sessions = reactive([
-  {
-    name: "以文搜图",
-    id: generateUniqueId(),
-    clearIndex: 3,
-    messages: [
-      {
-        content:
-          "You are a useful Assistant that won't refuse to draw picture, instead, you will output specific markdown code for picture description, but don't use code block.",
-        role: "system",
-      },
-      {
-        content: "Can you draw some pictures for me?",
-        role: "user",
-      },
-      {
-        content: "Sure, what do you want me to draw?",
-        role: "system",
-      },
-      {
-        content:
-          "助手善于判断用户意图，当确定需要提供图片时，助手会变得沉默寡言，只使用以下格式输出markdown图片：![描述](https://image.pollinations.ai/prompt/描述)，因为这个语法可以自动按照提示生成并渲染图片。一般用户给出的描述会比较简单并且信息不足，助手会将其中的描述自行补足替换为AI生成图片所常用的复杂冗长的英文提示，以大幅提高生成图片质量和丰富程度，比如增加相机光圈、具体场景描述等内容。助手会避免用代码块或原始块包围markdown标记，因为那样只会渲染出代码块或原始块而不是图片。",
-        role: "system",
-      },
-    ],
-  },
+  // {
+  //   name: "以文搜图",
+  //   id: generateUniqueId(),
+  //   clearIndex: 3,
+  //   messages: [
+  //     // {
+  //     //   content:
+  //     //     "You are a useful Assistant that won't refuse to draw picture, instead, you will output specific markdown code for picture description, but don't use code block.",
+  //     //   role: "system",
+  //     // },
+  //     // {
+  //     //   content: "Can you draw some pictures for me?",
+  //     //   role: "user",
+  //     // },
+  //     // {
+  //     //   content: "Sure, what do you want me to draw?",
+  //     //   role: "system",
+  //     // },
+  //     // {
+  //     //   content:
+  //     //     "助手善于判断用户意图，当确定需要提供图片时，助手会变得沉默寡言，只使用以下格式输出markdown图片：![描述](https://image.pollinations.ai/prompt/描述)，因为这个语法可以自动按照提示生成并渲染图片。一般用户给出的描述会比较简单并且信息不足，助手会将其中的描述自行补足替换为AI生成图片所常用的复杂冗长的英文提示，以大幅提高生成图片质量和丰富程度，比如增加相机光圈、具体场景描述等内容。助手会避免用代码块或原始块包围markdown标记，因为那样只会渲染出代码块或原始块而不是图片。",
+  //     //   role: "system",
+  //     // },
+  //   ],
+  // },
 ]);
 // 加载
 onMounted(() => {
@@ -192,7 +192,6 @@ const handleSendMessage = async () => {
     content: text.value,
   });
   text.value = "";
-  // 滚动到底部
   await nextTick();
   smoothScrollToBottom();
   const msgId = generateUniqueId();
@@ -200,17 +199,17 @@ const handleSendMessage = async () => {
   const data = JSON.stringify({
     model: model.value,
     message_id: msgId,
-    messages: sessions[curSession.value].messages.splice(
-      sessions[curSession.value].clearIndex + 1
-    ),
+    messages: sessions[curSession.value].clearIndex
+      ? sessions[curSession.value].messages.slice(
+          sessions[curSession.value].clearIndex + 1
+        )
+      : sessions[curSession.value].messages,
   });
   sessions[curSession.value].messages.push({
     role: "assistant",
     content: "",
   });
-
   chattingMap[msgId] = sessions[curSession.value].messages.at(-1);
-
   ws.send(data);
 };
 
@@ -225,7 +224,6 @@ const handelClearCtx = () => {
     sessions[curSession.value].clearIndex =
       sessions[curSession.value].messages.length - 1;
   }
-  smoothScrollToBottom();
 };
 // 新会话
 const handleNewSession = () => {
@@ -280,20 +278,21 @@ const save = () => {
 
 // 滚动到底部
 const smoothScrollToBottom = () => {
-  const distanceToBottom =
-    scroll.value.scrollHeight -
-    (scroll.value.scrollTop + scroll.value.clientHeight);
-  const speed = Math.max(55, Math.floor(distanceToBottom / 20));
+  const maxScrollTop = scroll.value.scrollHeight - scroll.value.clientHeight;
+  let currentScrollTop = scroll.value.scrollTop;
 
-  if (distanceToBottom >= 55) {
-    scroll.value.scrollTop += speed;
-    window.requestAnimationFrame(smoothScrollToBottom);
-    // 防止奇奇怪怪的bug
-  } else {
-    scroll.value.scrollTop =
-      scroll.value.scrollHeight - scroll.value.clientHeight;
-    return;
-  }
+  const step = () => {
+    currentScrollTop += 20;
+
+    if (currentScrollTop >= maxScrollTop) {
+      scroll.value.scrollTop = maxScrollTop;
+    } else {
+      scroll.value.scrollTop = currentScrollTop;
+      requestAnimationFrame(step);
+    }
+  };
+
+  requestAnimationFrame(step);
 };
 </script>
 
@@ -452,36 +451,6 @@ const smoothScrollToBottom = () => {
       .chat-config {
         display: flex;
         margin-bottom: 20px;
-        .clearCtx {
-          display: flex;
-          align-items: center;
-          overflow: hidden;
-          cursor: pointer;
-          color: #dedede;
-          padding: 2px 6px;
-          border: 1px solid #dedede;
-          border-radius: 12px;
-          font-size: 12px;
-          .iconfont {
-            font-size: 12px;
-            margin: 2px;
-          }
-          span {
-            white-space: nowrap;
-            width: 0;
-            transform: translateX(-5px);
-            opacity: 0;
-            transition: 0.5s ease;
-          }
-          &:hover {
-            span {
-              width: auto;
-              transform: translateX(0);
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
-        }
       }
       .input-wrapper {
         height: 80px;
