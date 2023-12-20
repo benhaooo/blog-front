@@ -8,13 +8,62 @@
       okText="确定"
       @ok="handelOk"
     >
-      <textarea class="input" v-model="editText" style="height: 200px">
- 你好</textarea
+      <textarea
+        class="input"
+        v-model="editText"
+        style="height: 300px"
+      ></textarea>
+    </a-modal>
+    <!-- 会话配置 -->
+    <a-modal
+      v-model:visible="showConfigModal"
+      title="会话配置"
+      width="800px"
+      cancelText="取消"
+      okText="保存"
+      @ok="handelOk"
+    >
+      <a-form
+        :model="currentSession"
+        labelAlign="left"
+        :colon="false"
+        :labelCol="{ span: 6 }"
       >
+        <a-form-item label="名称">
+          <a-input v-model:value="currentSession.name" />
+        </a-form-item>
+        <a-form-item label="模型">
+          <a-select
+            ref="select"
+            v-model:value="currentSession.model"
+            style="width: 120px"
+          >
+            <a-select-option value="gpt-3.5-turbo"
+              >gpt-3.5-turbo</a-select-option
+            >
+            <a-select-option value="gpt-3.5-turbo-16k"
+              >gpt-3.5-turbo-16k</a-select-option
+            >
+            <a-select-option value="gpt-4">gpt-4</a-select-option>
+            <a-select-option value="gpt-4-vision-preview"
+              >gpt-4-vision-preview</a-select-option
+            >
+          </a-select>
+        </a-form-item>
+        <a-form-item label="上下文数量">
+          <a-slider v-model:value="currentSession.ctxLimit" :max="50" />{{
+            currentSession.ctxLimit
+          }}
+        </a-form-item>
+        <a-form-item label="回复数">
+          <a-slider v-model:value="currentSession.maxTokens" :max="4096" />{{
+            currentSession.maxTokens
+          }}
+        </a-form-item>
+      </a-form>
     </a-modal>
 
     <div class="chat-key-wrapper">
-      {{ sessions.length }}
       <el-button @click="handleNewSession">添加新的会话</el-button>
       <SessionList
         :sessions="sessions"
@@ -26,29 +75,38 @@
 
     <div class="chat-value">
       <div class="messages" ref="scroll">
-        <template
-          v-for="(message, index) in currentSession.messages"
-          :key="message.id"
-        >
-          <Message :message="message" :userInfo="userInfo" />
+        <div class="chat-config" @click="handelShowConfig">
+          {{ currentSession.model }}
+        </div>
+        <div v-if="currentSession.clearedCtx">
+          <template
+            v-for="message in currentSession.clearedCtx"
+            :key="message.id"
+          >
+            <Message
+              :message="message"
+              :userInfo="userInfo"
+              :chattingMap="chattingMap"
+              @delete="handleDeleteMessage"
+              @edit="handleEditMessage"
+            />
+          </template>
+          <div class="divider">上下文已清除</div>
+        </div>
 
-          <div class="divider" v-if="currentSession.clearIndex == index">
-            上下文已清除
-          </div>
+        <template v-for="message in currentSession.messages" :key="message.id">
+          <Message
+            :message="message"
+            :userInfo="userInfo"
+            :chattingMap="chattingMap"
+            @delete="handleDeleteMessage"
+            @edit="handleEditMessage"
+          />
         </template>
       </div>
       <div class="chat-input-box">
-        <div class="chat-config">
-          <a-select ref="select" v-model:value="model" style="width: 120px">
-            <a-select-option value="gpt-3.5-turbo"
-              >gpt-3.5-turbo</a-select-option
-            >
-            <a-select-option value="gpt-4">gpt-4</a-select-option>
-            <a-select-option value="gpt-4-vision-preview"
-              >gpt-4-vision-preview</a-select-option
-            >
-          </a-select>
-          <ExpandableButtom @click="handelClearCtx" :text="'你好'">
+        <div class="chat-handle">
+          <ExpandableButtom @click="handelClearCtx" :text="'清除上下文'">
             <i class="iconfont" style="font-size: 12px"
               >&#xe62e;</i
             ></ExpandableButtom
@@ -87,34 +145,33 @@ const sessionsStore = useSessionsStore();
 //接收消息
 const ws = useWebSocket(async (e) => {
   const data = JSON.parse(e.data);
-  if (data.content) {
+  if (typeof data.content != "undefined") {
     chattingMap[data.message_id].content += data.content;
+  } else {
+    //结束
+    delete chattingMap[data.message_id];
   }
   save();
-  await nextTick();
-  smoothScrollToBottom();
 });
-const showEditModal = ref(false);
-const editText = ref("");
-const editIndex = ref(0);
 const text = ref("");
-const model = ref("gpt-3.5-turbo");
 const userInfo = appStore.userInfo;
-const chattingMap = {};
+
+const showEditModal = ref(false);
+const showConfigModal = ref(false);
+const editMessage = ref({});
+const editText = ref("");
 
 const scroll = ref(null);
 
-const { sessions, currentSessionId, currentSession } =
+const { sessions, currentSessionId, chattingMap, currentSession } =
   storeToRefs(sessionsStore);
 // 加载
 onMounted(() => {
   const savedSessions = JSON.parse(localStorage.getItem("sessions"));
   if (savedSessions) {
-    console.log("load sessions");
-    console.log(savedSessions);
     sessionsStore.initSessions(savedSessions);
   } else {
-    // handleNewSession();
+    handleNewSession();
   }
 });
 
@@ -122,7 +179,6 @@ onMounted(() => {
 const handleSelectSession = async (id) => {
   sessionsStore.setCurrentSession(id);
 
-  // text.value = "";
   await nextTick();
   smoothScrollToBottom();
 };
@@ -132,6 +188,9 @@ const handleNewSession = () => {
   const newSession = {
     id: generateUniqueId(),
     name: "闲聊",
+    model: "gpt-3.5-turbo",
+    ctxLimit: 10,
+    maxTokens: 2048,
     messages: [
       {
         role: "system",
@@ -141,65 +200,74 @@ const handleNewSession = () => {
   };
   sessionsStore.addSession(newSession);
 
-  // save();
+  save();
 };
 
 // 删除会话
-const handleDeleteSession = (session) => {
-  sessionsStore.deleteSession(session);
+const handleDeleteSession = (index) => {
+  sessionsStore.deleteSession(index);
   save();
 };
 // 发送消息
 const handleSendMessage = async () => {
   if (!text.value) return;
   currentSession.value.messages.push({
+    id: generateUniqueId(),
     role: "user",
     content: text.value,
   });
   text.value = "";
-  await nextTick();
-  smoothScrollToBottom();
   const msgId = generateUniqueId();
-
   const data = JSON.stringify({
-    model: model.value,
+    model: currentSession.value.model,
     message_id: msgId,
-    messages: currentSession.value.clearIndex
-      ? currentSession.value.messages.slice(currentSession.value.clearIndex + 1)
-      : currentSession.value.messages,
+    messages: currentSession.value.messages,
   });
   currentSession.value.messages.push({
+    id: msgId,
     role: "assistant",
     content: "",
   });
-  chattingMap[msgId] = currentSession.value.messages.at(-1);
+  chattingMap[msgId] = currentSession.value.messages.filter(
+    (msg) => msg.id == msgId
+  )[0];
   ws.send(data);
+  await nextTick();
+  smoothScrollToBottom();
+};
+
+// 删除消息
+const handleDeleteMessage = (id) => {
+  currentSession.value.messages = currentSession.value.messages.filter(
+    (msg) => msg.id != id
+  );
 };
 
 // // 清楚上下文
-// const handelClearCtx = () => {
-//   if (
-//     sessions[curSession.value].clearIndex ==
-//     sessions[curSession.value].messages.length - 1
-//   ) {
-//     sessions[curSession.value].clearIndex = null;
-//   } else {
-//     sessions[curSession.value].clearIndex =
-//       sessions[curSession.value].messages.length - 1;
-//   }
-// };
+const handelClearCtx = () => {
+  if (!currentSession.value.clearedCtx) {
+    currentSession.value.clearedCtx = [];
+  }
+  currentSession.value.clearedCtx.push(...currentSession.value.messages);
+  currentSession.value.messages = [];
+  save();
+};
 
-// // 编辑消息
-// const handleEditMessage = (index) => {
-//   showEditModal.value = true;
-//   editIndex.value = index;
-//   editText.value = sessions[curSession.value].messages[index].content;
-// };
-// //确定编辑
-// const handelOk = () => {
-//   sessions[curSession.value].messages[editIndex.value].content = editText.value;
-//   showEditModal.value = false;
-// };
+// 编辑消息
+const handleEditMessage = (message) => {
+  showEditModal.value = true;
+  editMessage.value = message;
+  editText.value = message.content;
+};
+//确定编辑
+const handelOk = () => {
+  editMessage.value.content = editText.value;
+  showEditModal.value = false;
+};
+
+const handelShowConfig = () => {
+  showConfigModal.value = true;
+};
 
 // 保存至本地
 const save = () => {
@@ -242,6 +310,23 @@ const smoothScrollToBottom = () => {
   height: 100%;
 
   .chat-value {
+    position: relative;
+    .chat-config {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      color: #fff;
+      background-color: #111114;
+      border-radius: 0 0 6px 6px;
+      padding: 4px 16px;
+      cursor: pointer;
+      z-index: 999;
+      &:hover {
+        color: #1d90f5;
+      }
+    }
     flex: 1;
     margin: 30px;
     background-color: rgb(50, 54, 68);
@@ -273,7 +358,7 @@ const smoothScrollToBottom = () => {
     }
     .chat-input-box {
       padding: 20px;
-      .chat-config {
+      .chat-handle {
         display: flex;
         margin-bottom: 20px;
       }

@@ -2,7 +2,7 @@
 <template>
   <div class="session-list">
     <div
-      v-for="session in sessions"
+      v-for="(session, index) in sessions"
       :key="session.id"
       class="chat-key"
       :class="{ active: currentSessionId == session.id }"
@@ -13,7 +13,7 @@
         <div class="name">{{ session.name }}</div>
         <div class="count">{{ session.messages.length }}条对话</div>
       </div>
-      <i class="iconfont" @click.stop="deleteSession(session.id)">&#xe630;</i>
+      <i class="iconfont" @click.stop="deleteSession(index)">&#xe630;</i>
     </div>
   </div>
 </template>
@@ -32,8 +32,8 @@ const selectSession = (id) => {
   emits("select", id);
 };
 
-const deleteSession = (id) => {
-  emits("delete", id);
+const deleteSession = (index) => {
+  emits("delete", index);
 };
 </script>
 
