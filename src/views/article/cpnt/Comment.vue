@@ -25,12 +25,11 @@
             "
           />
           <!-- 子评论 -->
-          <CommentUnit
+          <!-- <CommentUnit
             v-for="commentChild in commentRoot.children"
             :key="commentChild.id"
             :comment="commentChild"
             :rootId="commentRoot.id"
-            :isChild="true"
             @reply="
               reply(
                 index,
@@ -40,13 +39,13 @@
                 commentRoot.id
               )
             "
-          />
-          <CommentPublish
+          /> -->
+          <!-- <CommentPublish
             v-if="commentRoot.showPublish"
             @publish="publish"
             :type="1"
             :replyTo="replyTo"
-          />
+          /> -->
         </div>
       </template>
     </div>
@@ -97,13 +96,14 @@ const publish = (content, replyTo) => {
 };
 
 // 回复输入框调用
-const reply = (index, senderId, senderNickName, id,rootId) => {
+const reply = (index, senderId, senderNickName, id, rootId) => {
   replyTo.value = {
     senderId,
     senderNickName,
     id,
-    rootId
+    rootId,
   };
+  console.log(replyTo.value);
   commentList.value.forEach((comment) => {
     comment.showPublish = false;
   });
@@ -114,15 +114,15 @@ const reply = (index, senderId, senderNickName, id,rootId) => {
 <style lang="less" scoped>
 .comment {
   margin-top: 30px;
-  .comment-header{
+  .comment-header {
     display: flex;
     align-items: center;
     margin-bottom: 20px;
-    i{
+    i {
       margin-right: 20px;
       font-size: 24px;
     }
-    h3{
+    h3 {
       font-size: 16px;
       font-weight: bolder;
     }

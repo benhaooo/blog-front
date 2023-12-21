@@ -213,6 +213,9 @@ const pointLike = () => {
       padding: 50px 40px;
       margin-right: 20px;
       .article-content {
+        #md-editor-v3 {
+          --md-bk-color: transparent;
+        }
       }
 
       .signature {
