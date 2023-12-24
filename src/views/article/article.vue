@@ -142,9 +142,11 @@ const article = ref({});
 const commentList = ref([]);
 const isLiked = ref(false);
 // 获取文章内容
-getArticle(articleId).then((res) => {
-  article.value = res.data;
-});
+getArticle(articleId, appStore.userInfo ? appStore.getHeader() : null).then(
+  (res) => {
+    article.value = res.data;
+  }
+);
 
 // 点赞
 const pointLike = () => {

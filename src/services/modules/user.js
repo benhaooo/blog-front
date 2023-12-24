@@ -9,48 +9,64 @@ export function register(data) {
 }
 
 
-export function login(data){
+export function login(data) {
     return MyRequest.post({
         url: "/login",
         data: data
     })
 }
 
-export function logout(headers){
+export function logout(headers) {
     return MyRequest.post({
         url: "/logout",
-        headers:headers
+        headers: headers
     })
 }
 
-export function update(data,headers){
+export function changePwd(data, headers) {
+    return MyRequest.post({
+        url: "/changePwd",
+        headers: headers,
+        data: data
+    })
+}
+
+export function update(data, headers) {
     return MyRequest.post({
         url: "/user/update",
-        data:data,
-        headers:headers,
+        data: data,
+        headers: headers,
     })
 }
 
 
-export function getInfo(headers){
+export function getInfo(headers) {
     return MyRequest.get({
         url: "/user/info",
-        headers:headers,
+        headers: headers,
     })
 }
 
-export function getInfoDetail(headers){
+export function getInfoDetail(headers) {
     return MyRequest.get({
         url: "/user/info/detail",
-        headers:headers,
+        headers: headers,
     })
 }
 
-export function updateInfoDetail(data,headers){
+export function updateInfoDetail(data, headers) {
     return MyRequest.request({
-        method:"put",
+        method: "put",
         url: "/user/info/detail",
         headers,
         data,
+    })
+}
+
+
+export function getMyLikeArticles(headers) {
+    return MyRequest.get({
+        url: "/user/mylike",
+        headers: headers,
     })
 }

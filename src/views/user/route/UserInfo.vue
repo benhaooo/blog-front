@@ -139,9 +139,6 @@
       :bordered="false"
       style="background-color: #d1c2d3; border-radius: 10px; margin: 20px"
     >
-      <p>Card content</p>
-      <p>Card content</p>
-      <p>Card content</p>
     </a-card>
   </div>
 </template>

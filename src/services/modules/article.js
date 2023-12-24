@@ -1,8 +1,9 @@
 import MyRequest from '../request'
 
-export function getArticle(id) {
+export function getArticle(id, headers) {
     return MyRequest.get({
         url: `/article/${id}`,
+        headers
     })
 }
 
@@ -35,9 +36,9 @@ export function getArticleArchiveList(current) {
     })
 }
 
-export function putPointLike(id,headers) {
+export function putPointLike(id, headers) {
     return MyRequest.request({
-        method:"put",
+        method: "put",
         url: `/article/like/${id}`,
         headers
     })

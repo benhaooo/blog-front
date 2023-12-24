@@ -18,7 +18,7 @@
           <div class="project-item">
             <img
               class="project-item-favicon"
-              src="@/assets/imgs/ava.jpg"
+              src="@/assets/imgs/gpt.png"
               alt=""
             />
             <div class="project-item-info">

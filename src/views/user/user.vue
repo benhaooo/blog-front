@@ -36,7 +36,11 @@
                 >我的点赞</router-link
               ></a-menu-item
             >
-            <a-menu-item key="5">修改密码</a-menu-item>
+            <a-menu-item key="5"
+              ><router-link to="/user/changePwd"
+                >修改密码</router-link
+              ></a-menu-item
+            >
           </a-sub-menu>
         </a-menu>
       </a-layout-sider>
