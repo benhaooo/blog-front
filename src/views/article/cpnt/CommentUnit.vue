@@ -20,7 +20,6 @@
 </template>
 
 <script setup>
-rootIdrootIdrootId;
 import { defineProps, defineEmits } from "vue";
 const props = defineProps({
   comment: {},

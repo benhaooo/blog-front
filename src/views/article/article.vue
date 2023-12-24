@@ -119,15 +119,6 @@ const likePath = ref(null);
 onMounted(() => {
   likePath.value.style.strokeDasharray = likePath.value.getTotalLength();
   likePath.value.style.strokeDashoffset = "0";
-
-  // let socket = new WebSocket("ws://localhost:9966/ws");
-  // socket.onopen = function (event) {
-  //   console.log("WebSocket连接已打开");
-  //   socket.send("订阅/topic/likes");
-  // };
-  // socket.onmessage = function (event) {
-  //   console.log("收到消息: " + event.data);
-  // };
 });
 
 const handleMouseEnter = () => {
@@ -157,6 +148,10 @@ getArticle(articleId).then((res) => {
 
 // 点赞
 const pointLike = () => {
+  if (!appStore.userInfo) {
+    message.error("请先登录");
+    return;
+  }
   putPointLike(article.value.id, appStore.getHeader()).then((res) => {
     if (res.code == 20001) {
       article.value.likeCount++;

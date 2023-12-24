@@ -14,6 +14,7 @@ const useAppStore = defineStore("app", {
         userInfoDetail: null,
 
     }),
+
     actions: {
         getToken() {
             return this.token || localStorage.getItem("token") || "";

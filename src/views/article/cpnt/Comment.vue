@@ -25,7 +25,7 @@
             "
           />
           <!-- 子评论 -->
-          <!-- <CommentUnit
+          <CommentUnit
             v-for="commentChild in commentRoot.children"
             :key="commentChild.id"
             :comment="commentChild"
@@ -39,13 +39,13 @@
                 commentRoot.id
               )
             "
-          /> -->
-          <!-- <CommentPublish
+          />
+          <CommentPublish
             v-if="commentRoot.showPublish"
             @publish="publish"
             :type="1"
             :replyTo="replyTo"
-          /> -->
+          />
         </div>
       </template>
     </div>
@@ -103,7 +103,6 @@ const reply = (index, senderId, senderNickName, id, rootId) => {
     id,
     rootId,
   };
-  console.log(replyTo.value);
   commentList.value.forEach((comment) => {
     comment.showPublish = false;
   });

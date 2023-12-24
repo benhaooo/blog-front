@@ -3,7 +3,13 @@
     <el-container style="height: 100%">
       <el-aside width="100px"> <ChatNav /> </el-aside>
       <el-main>
-        <router-view></router-view>
+        <transition>
+          <router-view v-slot="{ Component }">
+            <keep-alive>
+              <component :is="Component" />
+            </keep-alive>
+          </router-view>
+        </transition>
       </el-main>
     </el-container>
   </div>

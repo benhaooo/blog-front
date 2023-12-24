@@ -5,6 +5,7 @@ const useSessionsStore = defineStore('sessions', {
         sessions: [],
         currentSessionId: "",
         chattingMap: {},
+        askprompt: {},
     }),
     getters: {
         currentSession: (state) => {
@@ -17,11 +18,11 @@ const useSessionsStore = defineStore('sessions', {
         initSessions(obj) {
             this.sessions = obj._object.sessions
             this.currentSessionId = this.sessions.at(0).id
-            console.log(this.sessions)
         },
         addSession(session) {
             this.sessions.push(session);
             this.currentSessionId = session.id;
+            console.log(this.sessions)
 
         },
         deleteSession(index) {
@@ -34,7 +35,6 @@ const useSessionsStore = defineStore('sessions', {
 
                 if (index == this.sessions.length - 1) {
                     this.currentSessionId = this.sessions[index - 1].id;
-                    console.log(this.currentSessionId)
                 } else {
                     this.currentSessionId = this.sessions[index + 1].id;
                 }
@@ -46,7 +46,7 @@ const useSessionsStore = defineStore('sessions', {
             this.currentSessionId = id;
         },
         addMessageToSession(index, message) {
-            this.sessions[index].messages.push(message);
+            // this.sessions[index].messages.push(message);
         },
     },
 });

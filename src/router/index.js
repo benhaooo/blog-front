@@ -37,15 +37,15 @@ const router = createRouter({
       name: 'chat',
       component: () => import('@/views/projectx/projects/Chat.vue'),
       children: [
-        // {
-        //   path: '',
-        //   redirect: { name: 'message' }
-        // },
-        // {
-        //   path: '/projectx/chat/message',
-        //   name: 'message',
-        //   component: () => import('@/views/projectx/projects/page/Message.vue'),
-        // },
+        {
+          path: '',
+          redirect: { name: 'message' }
+        },
+        {
+          path: '/projectx/chat/message',
+          name: 'message',
+          component: () => import('@/views/projectx/projects/page/Message.vue'),
+        },
         {
           path: '/projectx/chat/contacts',
           name: 'contacts',

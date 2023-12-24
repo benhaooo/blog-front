@@ -1,8 +1,11 @@
 import MyRequest from '../request'
 
-export function getListAskprompt() {
+export function getAskpromptList(current) {
     return MyRequest.get({
-        url: '/askprompt/list',
+        url: '/gpt/askprompt/list',
+        params: {
+            current
+        }
     })
 }
 

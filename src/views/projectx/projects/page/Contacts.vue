@@ -1,7 +1,7 @@
 <template>
   <div class="askprompt-container">
     <div class="askprompt-content">
-      <template v-for="(askprompt, index) in askprompts" :key="askprompt.id">
+      <template v-for="askprompt in askprompts" :key="askprompt.id">
         <div class="askprompt-card">
           <div class="name">{{ askprompt.name }}</div>
           <div class="content-wrapper">
@@ -11,57 +11,45 @@
         </div>
       </template>
     </div>
+    <a-pagination
+      v-model:current="current"
+      :total="total"
+      @change="pageChange"
+      show-less-items
+    />
   </div>
 </template>
 
 <script setup>
-import { reactive } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 const router = useRouter();
+import useSessionsStore from "@/stores/modules/chat";
+const sessionsStore = useSessionsStore();
+import { getAskpromptList } from "@/services";
 
-const askprompts = reactive([
-  {
-    id: 1,
-    name: "写作助理",
-    content:
-      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
-  },
-  {
-    id: 2,
-    name: "写作助理",
-    content:
-      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
-  },
-  {
-    id: 3,
-    name: "写作助理",
-    content:
-      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
-  },
-  {
-    id: 1,
-    name: "写作助理",
-    content:
-      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
-  },
-  {
-    id: 2,
-    name: "写作助理",
-    content:
-      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
-  },
-  {
-    id: 3,
-    name: "写作助理",
-    content:
-      "As a writing improvement assistant, your task is to improve the spelling, grammar, clarity, concision, and overall readability of the text provided, while breaking down long sentences, reducing repetition, and providing suggestions for improvement. Please provide only the corrected Chinese version of the text and avoid including explanations. Please begin by editing the following text: [文章内容]",
-  },
-]);
+const askprompts = ref([]);
+const current = ref(1);
+const total = ref(0);
+
+onMounted(() => {
+  getList();
+});
 
 const handelUse = (askprompt) => {
+  sessionsStore.askprompt = askprompt;
   router.push({
     name: "message",
-    state: askprompt,
+  });
+};
+const pageChange = () => {
+  console.log("###");
+  getList();
+};
+const getList = () => {
+  getAskpromptList(current.value).then(({ data }) => {
+    askprompts.value = data.rows;
+    total.value = data.total;
   });
 };
 </script>
@@ -77,6 +65,7 @@ const handelUse = (askprompt) => {
     flex-wrap: wrap;
 
     .askprompt-card {
+      position: relative;
       width: 266px;
       height: 360px;
       overflow: hidden;
@@ -95,16 +84,26 @@ const handelUse = (askprompt) => {
         display: flex;
         flex-direction: column;
         align-items: center;
+        overflow: hidden;
         .to-use {
+          position: absolute;
           width: 99px;
           height: 40px;
           background: linear-gradient(to right, #2196f3, #4ffbdf);
           border-radius: 20px;
-          margin-top: 10px;
           border: none;
+          opacity: 0;
+          bottom: 10px;
+          transition: 0.5s ease;
           &:hover {
             box-shadow: 0 0 2px 1px #4ffbdf;
           }
+        }
+      }
+      &:hover {
+        .to-use {
+          bottom: 20px;
+          opacity: 1;
         }
       }
     }

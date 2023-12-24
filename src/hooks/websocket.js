@@ -1,5 +1,5 @@
 function useWebSocket(handleMessage) {
-    const ws = new WebSocket("ws://127.0.0.1:9967")
+    const ws = new WebSocket("ws://127.0.0.1:9956")
 
     const init = () => {
         bindEvent()
