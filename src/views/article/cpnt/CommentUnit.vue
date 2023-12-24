@@ -1,5 +1,5 @@
 <template>
-  <div class="comment-unit">
+  <div class="comment-unit" :class="{ isChild: isChild }">
     <div class="avatar">
       <img :src="comment.senderAvatar" alt="" />
     </div>
@@ -24,6 +24,7 @@ import { defineProps, defineEmits } from "vue";
 const props = defineProps({
   comment: {},
   rootId: Number,
+  isChild: false,
 });
 
 const emit = defineEmits(["reply"]);
@@ -79,6 +80,13 @@ const reply = function () {
         }
       }
     }
+  }
+}
+.isChild {
+  padding-left: 50px;
+  .avatar {
+    width: 30px;
+    height: 30px;
   }
 }
 </style>

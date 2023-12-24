@@ -5,7 +5,7 @@
         <i class="iconfont center edit" @click="handleEditMessage(message)"
           >&#xeabd;</i
         >
-        <el-avatar size="small" :src="userInfo.avatar" />
+        <img :src="userInfo.avatar" alt="" />
       </div>
       <span class="name">{{ userInfo.nickName }}</span>
     </div>
@@ -14,11 +14,12 @@
         <i class="iconfont center edit" @click="handleEditMessage(message)"
           >&#xeabd;</i
         >
-        <el-avatar size="small" src="@/assets/imgs/gpt.png" />
+        <img src="@/assets/imgs/gpt.png" alt="" />
       </div>
       <span class="name">{{ model }}</span>
     </div>
-    <div class="content" :class="{ chatting: isChatting }">
+    <!-- <div class="content" :class="{ chatting: isChatting }"> -->
+    <div class="content">
       <text-loading v-if="!message.content" />
       <md-editor v-else v-model="message.content" previewOnly />
       <div class="handle">
@@ -51,10 +52,7 @@ const handleEditMessage = (id) => {
   emits("edit", id);
 };
 const handleDeleteMessage = (id) => {
-  console.log(id);
-  console.log(chattingMap[id]);
-  console.log(isChatting.value);
-  // emits("delete", id);
+  emits("delete", id);
 };
 
 const isChatting = computed(() => props.message.id in chattingMap);
@@ -79,10 +77,15 @@ const isChatting = computed(() => props.message.id in chattingMap);
         width: 100%;
         height: 100%;
         cursor: pointer;
-        color: #363635;
+        color: #000000;
         opacity: 0;
         background-color: rgba(67, 66, 87, 0.535);
         transition: 0.3s;
+        z-index: 9;
+      }
+      img {
+        width: 100%;
+        height: 100%;
       }
     }
     .name {
@@ -137,6 +140,9 @@ const isChatting = computed(() => props.message.id in chattingMap);
       .avater-wrapper {
         .edit {
           opacity: 1;
+        }
+        img {
+          opacity: 0.5;
         }
       }
     }

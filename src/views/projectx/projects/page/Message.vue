@@ -116,7 +116,7 @@
           <textarea
             class="input"
             v-model="text"
-            placeholder="请输入消息"
+            placeholder="ctrl + enter 发送"
             @keydown.ctrl.enter="handleSendMessage()"
           ></textarea>
           <button class="send" @click="handleSendMessage()">发送</button>

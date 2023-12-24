@@ -26,6 +26,7 @@
           />
           <!-- 子评论 -->
           <CommentUnit
+            :isChild="true"
             v-for="commentChild in commentRoot.children"
             :key="commentChild.id"
             :comment="commentChild"
@@ -89,8 +90,7 @@ const publish = (content, replyTo) => {
     rootId: replyTo?.rootId,
   };
   publishComment(data, appStore.getHeader()).then((res) => {
-    message.success(res.message);
-    // content = "";
+    message.success("评论成功");
     getComment();
   });
 };
